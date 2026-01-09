@@ -1,4 +1,4 @@
-// Esperar a que Puter.js esté cargado
+// Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
     
     let conversationHistory = [];
@@ -53,36 +53,44 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToBottom();
 
         try {
-            // Construir el contexto de la conversación
-            let fullContext = `Eres un experto en pensamiento libertario, economía austriaca y filosofía política libertaria.
+            // Construir los mensajes en formato correcto para Puter
+            const messages = [
+                {
+                    role: "system",
+                    content: `Eres un experto en pensamiento libertario, economía austriaca y filosofía política libertaria.
 
 Principios clave que defiendes:
 - Libertad individual y propiedad privada
 - Principio de no agresión (PNA)
-- Libre mercado y capitalismo
+- Libre mercado y capitalismo laissez-faire
 - Crítica al estatismo y planificación central
-- Autores: Ludwig von Mises, Friedrich Hayek, Murray Rothbard, Frédéric Bastiat
+- Autores clave: Ludwig von Mises, Friedrich Hayek, Murray Rothbard, Frédéric Bastiat
 
-Responde en español de forma educativa, concisa (máximo 250 palabras) y argumentada.
+Responde en español de forma educativa, concisa (200-300 palabras máximo) y bien argumentada.`
+                }
+            ];
 
-`;
-
-            // Añadir historial reciente
-            const recent = conversationHistory.slice(-6);
-            recent.forEach(msg => {
-                fullContext += `${msg.role === 'user' ? 'Usuario' : 'Asistente'}: ${msg.content}\n`;
-            });
-            
-            fullContext += `\nUsuario: ${message}\nAsistente:`;
-
-            console.log('Llamando a Puter AI...');
-
-            // Usar Puter.js para llamar a GPT (GRATIS, SIN CORS)
-            const response = await puter.ai.chat(fullContext, {
-                model: "gpt-4o-mini" // Modelo gratuito y potente
+            // Añadir historial reciente de conversación
+            conversationHistory.forEach(msg => {
+                messages.push({
+                    role: msg.role,
+                    content: msg.content
+                });
             });
 
-            console.log('Respuesta recibida:', response);
+            // Añadir mensaje actual del usuario
+            messages.push({
+                role: "user",
+                content: message
+            });
+
+            console.log('Llamando a Puter AI con mensajes:', messages);
+
+            // Usar Puter.js correctamente
+            const response = await puter.ai.chat(messages);
+
+            console.log('Respuesta recibida (tipo):', typeof response);
+            console.log('Respuesta recibida (completa):', response);
 
             // Remover indicador de carga
             const loadingMsg = document.getElementById('loading-message');
@@ -90,28 +98,51 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
                 loadingMsg.remove();
             }
 
-            let assistantMessage = response;
-
-            if (!assistantMessage || assistantMessage.length < 10) {
-                throw new Error('Respuesta vacía');
+            // Extraer el texto de la respuesta correctamente
+            let assistantMessage = '';
+            
+            if (typeof response === 'string') {
+                assistantMessage = response;
+            } else if (response && response.message) {
+                assistantMessage = response.message;
+            } else if (response && response.text) {
+                assistantMessage = response.text;
+            } else if (response && response.content) {
+                assistantMessage = response.content;
+            } else if (response && typeof response === 'object') {
+                // Si es un objeto, intentar convertirlo a string
+                assistantMessage = JSON.stringify(response);
             }
 
-            // Limpiar respuesta
-            assistantMessage = cleanResponse(assistantMessage);
+            console.log('Mensaje extraído:', assistantMessage);
+
+            if (!assistantMessage || assistantMessage.length < 5) {
+                throw new Error('Respuesta vacía o inválida');
+            }
+
+            // Limpiar respuesta (ahora sí podemos usar trim)
+            assistantMessage = String(assistantMessage).trim();
 
             // Guardar en historial
-            conversationHistory.push({ role: 'user', content: message });
-            conversationHistory.push({ role: 'assistant', content: assistantMessage });
+            conversationHistory.push({ 
+                role: 'user', 
+                content: message 
+            });
+            conversationHistory.push({ 
+                role: 'assistant', 
+                content: assistantMessage 
+            });
 
-            // Limitar historial a últimas 10 interacciones
-            if (conversationHistory.length > 20) {
-                conversationHistory = conversationHistory.slice(-20);
+            // Limitar historial a últimas 6 interacciones (12 mensajes)
+            if (conversationHistory.length > 12) {
+                conversationHistory = conversationHistory.slice(-12);
             }
 
             addMessage(assistantMessage, 'assistant');
 
         } catch (error) {
             console.error('Error completo:', error);
+            console.error('Stack:', error.stack);
             
             const loadingMsg = document.getElementById('loading-message');
             if (loadingMsg) {
@@ -119,7 +150,7 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
             }
             
             addMessage(
-                `❌ Error al comunicarse con la IA: ${error.message}. Por favor, intenta de nuevo.`,
+                `❌ Error: ${error.message || 'No se pudo conectar con la IA'}. Por favor, recarga la página e intenta de nuevo.`,
                 'error'
             );
         } finally {
@@ -127,28 +158,6 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
             sendButton.textContent = 'Enviar';
             userInput.focus();
         }
-    }
-
-    function cleanResponse(text) {
-        let cleaned = text.trim();
-        
-        // Remover marcadores si aparecen
-        const markers = ['Usuario:', 'Asistente:', 'Pregunta:', 'Respuesta:'];
-        markers.forEach(marker => {
-            if (cleaned.startsWith(marker)) {
-                cleaned = cleaned.substring(marker.length).trim();
-            }
-        });
-        
-        // Remover líneas vacías extras
-        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-        
-        // Limitar longitud máxima
-        if (cleaned.length > 1500) {
-            cleaned = cleaned.substring(0, 1500) + '...';
-        }
-        
-        return cleaned;
     }
 
     function addMessage(content, type) {
@@ -160,9 +169,13 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
         } else {
             messageDiv.className = `message ${type}-message`;
             const label = type === 'user' ? 'Tú' : 'Asistente';
+            
+            // Asegurar que content es string
+            const textContent = String(content);
+            
             messageDiv.innerHTML = `
                 <div class="message-content">
-                    <strong>${label}:</strong> ${formatMessage(content)}
+                    <strong>${label}:</strong> ${formatMessage(textContent)}
                 </div>
             `;
         }
@@ -172,8 +185,11 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
     }
 
     function formatMessage(text) {
+        // Asegurar que es string
+        const str = String(text);
+        
         // Convertir saltos de línea
-        let formatted = text.replace(/\n/g, '<br>');
+        let formatted = str.replace(/\n/g, '<br>');
         
         // Convertir URLs
         formatted = formatted.replace(
@@ -185,7 +201,8 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
         const authors = [
             'Mises', 'Hayek', 'Rothbard', 'Bastiat', 'Nozick', 
             'Hazlitt', 'Friedman', 'Rand', 'Hoppe', 'Locke', 'Spooner',
-            'Ludwig von Mises', 'Friedrich Hayek', 'Murray Rothbard', 'John Locke'
+            'Ludwig von Mises', 'Friedrich Hayek', 'Murray Rothbard', 
+            'Frédéric Bastiat', 'Robert Nozick', 'Henry Hazlitt'
         ];
         
         authors.forEach(author => {
@@ -212,5 +229,5 @@ Responde en español de forma educativa, concisa (máximo 250 palabras) y argume
         console.log('Conversación limpiada');
     }
 
-    console.log('Chat inicializado con Puter.js');
+    console.log('Chat inicializado correctamente con Puter.js');
 });
