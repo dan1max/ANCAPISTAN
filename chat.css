@@ -1,0 +1,262 @@
+/* Estilos específicos para el chat */
+
+.chat-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.chat-info {
+    background: #e8f4f8;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #5a8a8a;
+    border-radius: 0;
+}
+
+.chat-info p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.chat-messages {
+    background: var(--parchment);
+    border: 1px solid #d4c5b0;
+    padding: 2rem;
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+}
+
+.message {
+    margin-bottom: 1.5rem;
+    padding: 1.2rem;
+    border-radius: 0;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-message {
+    background: #fff3e0;
+    border-left: 4px solid var(--accent);
+    margin-left: 2rem;
+}
+
+.assistant-message {
+    background: #f0f8f0;
+    border-left: 4px solid #5a8a5a;
+    margin-right: 2rem;
+}
+
+.message-content {
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.message-content strong {
+    color: var(--secondary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.chat-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+#user-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 1rem;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1rem;
+    border: 2px solid #d4c5b0;
+    background: white;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+#user-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.send-button {
+    padding: 1rem 2.5rem;
+    background: var(--secondary);
+    color: white;
+    border: none;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.send-button:hover {
+    background: var(--primary);
+}
+
+.send-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.api-key-notice {
+    background: #fff9e6;
+    padding: 1.5rem;
+    border: 1px solid var(--accent);
+    border-left: 4px solid var(--accent);
+    margin-top: 2rem;
+}
+
+.api-key-notice p {
+    margin-bottom: 1rem;
+}
+
+.api-key-notice a {
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+.api-key-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+#api-key-input {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.8rem;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1rem;
+    border: 2px solid #d4c5b0;
+}
+
+#save-key-button {
+    padding: 0.8rem 1.5rem;
+    background: var(--accent);
+    color: var(--dark);
+    border: none;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#save-key-button:hover {
+    background: var(--secondary);
+    color: white;
+}
+
+.loading-indicator {
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.loading-indicator::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+.error-message {
+    background: #ffe6e6;
+    border-left: 4px solid #d32f2f;
+    padding: 1rem;
+    margin-top: 1rem;
+    color: #c62828;
+}
+
+/* Estilos responsive para el chat */
+@media (max-width: 768px) {
+    .chat-messages {
+        padding: 1.5rem;
+        min-height: 300px;
+        max-height: 450px;
+    }
+
+    .user-message {
+        margin-left: 0.5rem;
+    }
+
+    .assistant-message {
+        margin-right: 0.5rem;
+    }
+
+    .message {
+        padding: 1rem;
+    }
+
+    .message-content {
+        font-size: 1rem;
+    }
+
+    .chat-input-container {
+        flex-direction: column;
+    }
+
+    #user-input {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .send-button {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .api-key-input-container {
+        flex-direction: column;
+    }
+
+    #api-key-input {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    #save-key-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-info {
+        padding: 1rem;
+    }
+
+    .chat-messages {
+        padding: 1rem;
+    }
+
+    .message {
+        padding: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .user-message,
+    .assistant-message {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
