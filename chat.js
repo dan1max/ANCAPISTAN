@@ -1,4 +1,3 @@
-// Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
     
     let conversationHistory = [];
@@ -53,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToBottom();
 
         try {
-            // Construir los mensajes en formato correcto para Puter
             const messages = [
                 {
                     role: "system",
@@ -70,7 +68,6 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
                 }
             ];
 
-            // Añadir historial reciente de conversación
             conversationHistory.forEach(msg => {
                 messages.push({
                     role: msg.role,
@@ -78,52 +75,52 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
                 });
             });
 
-            // Añadir mensaje actual del usuario
             messages.push({
                 role: "user",
                 content: message
             });
 
-            console.log('Llamando a Puter AI con mensajes:', messages);
+            console.log('Llamando a Puter AI...');
 
-            // Usar Puter.js correctamente
             const response = await puter.ai.chat(messages);
 
-            console.log('Respuesta recibida (tipo):', typeof response);
-            console.log('Respuesta recibida (completa):', response);
+            console.log('Respuesta completa:', response);
 
-            // Remover indicador de carga
             const loadingMsg = document.getElementById('loading-message');
             if (loadingMsg) {
                 loadingMsg.remove();
             }
 
-            // Extraer el texto de la respuesta correctamente
             let assistantMessage = '';
             
             if (typeof response === 'string') {
                 assistantMessage = response;
-            } else if (response && response.message) {
-                assistantMessage = response.message;
-            } else if (response && response.text) {
-                assistantMessage = response.text;
-            } else if (response && response.content) {
-                assistantMessage = response.content;
             } else if (response && typeof response === 'object') {
-                // Si es un objeto, intentar convertirlo a string
-                assistantMessage = JSON.stringify(response);
+                if (response.message && typeof response.message === 'string') {
+                    assistantMessage = response.message;
+                } else if (response.message && response.message.content) {
+                    assistantMessage = response.message.content;
+                } else if (response.text) {
+                    assistantMessage = response.text;
+                } else if (response.content) {
+                    assistantMessage = response.content;
+                } else if (response.choices && response.choices[0]) {
+                    assistantMessage = response.choices[0].message?.content || 
+                                     response.choices[0].text || '';
+                } else {
+                    console.warn('Formato de respuesta no reconocido:', response);
+                    assistantMessage = JSON.stringify(response);
+                }
             }
 
             console.log('Mensaje extraído:', assistantMessage);
 
-            if (!assistantMessage || assistantMessage.length < 5) {
-                throw new Error('Respuesta vacía o inválida');
+            if (!assistantMessage || (typeof assistantMessage === 'string' && assistantMessage.trim().length < 3)) {
+                throw new Error('Respuesta vacía o inválida de la IA');
             }
 
-            // Limpiar respuesta (ahora sí podemos usar trim)
             assistantMessage = String(assistantMessage).trim();
 
-            // Guardar en historial
             conversationHistory.push({ 
                 role: 'user', 
                 content: message 
@@ -133,7 +130,6 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
                 content: assistantMessage 
             });
 
-            // Limitar historial a últimas 6 interacciones (12 mensajes)
             if (conversationHistory.length > 12) {
                 conversationHistory = conversationHistory.slice(-12);
             }
@@ -149,10 +145,17 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
                 loadingMsg.remove();
             }
             
-            addMessage(
-                `❌ Error: ${error.message || 'No se pudo conectar con la IA'}. Por favor, recarga la página e intenta de nuevo.`,
-                'error'
-            );
+            let errorMsg = '❌ Error al comunicarse con la IA.';
+            
+            if (error.message.includes('not defined')) {
+                errorMsg += ' Puter.js no está cargado correctamente. Por favor, recarga la página.';
+            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMsg += ' Problema de conexión. Verifica tu internet.';
+            } else {
+                errorMsg += ` Detalles: ${error.message}`;
+            }
+            
+            addMessage(errorMsg, 'error');
         } finally {
             sendButton.disabled = false;
             sendButton.textContent = 'Enviar';
@@ -170,7 +173,6 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
             messageDiv.className = `message ${type}-message`;
             const label = type === 'user' ? 'Tú' : 'Asistente';
             
-            // Asegurar que content es string
             const textContent = String(content);
             
             messageDiv.innerHTML = `
@@ -185,19 +187,15 @@ Responde en español de forma educativa, concisa (200-300 palabras máximo) y bi
     }
 
     function formatMessage(text) {
-        // Asegurar que es string
         const str = String(text);
         
-        // Convertir saltos de línea
         let formatted = str.replace(/\n/g, '<br>');
         
-        // Convertir URLs
         formatted = formatted.replace(
             /(https?:\/\/[^\s]+)/g,
             '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
         );
         
-        // Resaltar nombres de autores libertarios
         const authors = [
             'Mises', 'Hayek', 'Rothbard', 'Bastiat', 'Nozick', 
             'Hazlitt', 'Friedman', 'Rand', 'Hoppe', 'Locke', 'Spooner',
