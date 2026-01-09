@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Artículos - Pensamiento Libertario</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="articulos.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">🗽 ANCAPISTAN</div>
+            <button class="menu-toggle" aria-label="Menú">☰</button>
+            <ul class="nav-links">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="index.html#pensamiento">Pensamiento</a></li>
+                <li><a href="index.html#libros">Libros</a></li>
+                <li><a href="index.html#falacias">Falacias</a></li>
+                <li><a href="articulos.html">Artículos</a></li>
+                <li><a href="chat.html">Chat IA</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero visible">
+            <h1>📰 Artículos de Daniconomics</h1>
+            <p>Análisis, reflexiones y debates sobre economía austriaca y pensamiento libertario</p>
+        </section>
+
+        <section class="articles-container visible">
+            <div class="search-section">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="🔍 Buscar artículos por título o tema..."
+                        autocomplete="off"
+                    >
+                    <button id="clear-search" class="clear-search-btn" style="display: none;">✕</button>
+                </div>
+                <div class="search-info">
+                    <p id="results-count"></p>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Cargando artículos desde Substack...</p>
+            </div>
+
+            <div id="error-message" class="error-message" style="display: none;">
+                <p>❌ No se pudieron cargar los artículos. Por favor, visita directamente 
+                <a href="https://daniconomics.substack.com" target="_blank" rel="noopener noreferrer">Daniconomics en Substack</a>.</p>
+            </div>
+
+            <div id="articles-list" class="articles-list"></div>
+
+            <div id="no-results" class="no-results" style="display: none;">
+                <p>🔍 No se encontraron artículos que coincidan con tu búsqueda.</p>
+                <button id="reset-search" class="reset-btn">Ver todos los artículos</button>
+            </div>
+        </section>
+
+        <section class="substack-cta visible">
+            <h2>💌 Suscríbete al Newsletter</h2>
+            <p>Recibe los últimos artículos directamente en tu correo</p>
+            <a href="https://daniconomics.substack.com/subscribe" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="subscribe-btn">
+                Suscribirse Gratis
+            </a>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Daniel 2026 Pensamiento Libertario. Promoviendo la libertad individual y el libre mercado.</p>
+        <p>La libertad es el derecho natural de todo ser humano.</p>
+    </footer>
+
+    <button class="scroll-top" aria-label="Volver arriba">↑</button>
+
+    <script src="script.js"></script>
+    <script src="articulos.js"></script>
+</body>
+</html>
