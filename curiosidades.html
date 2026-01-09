@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Datos Curiosos - Pensamiento Libertario</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="curiosidades.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">🗽 ANCAPISTAN</div>
+            <button class="menu-toggle" aria-label="Menú">☰</button>
+            <ul class="nav-links">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="index.html#pensamiento">Pensamiento</a></li>
+                <li><a href="index.html#libros">Libros</a></li>
+                <li><a href="index.html#falacias">Falacias</a></li>
+                <li><a href="articulos.html">Artículos</a></li>
+                <li><a href="curiosidades.html">Curiosidades</a></li>
+                <li><a href="chat.html">Chat IA</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero visible">
+            <h1>🎭 Datos Curiosos Libertarios</h1>
+            <p>Anécdotas, historias y momentos memorables del movimiento por la libertad</p>
+        </section>
+
+        <section id="featured-story" class="featured-story visible">
+            <div class="featured-badge">⭐ Historia Destacada del Día</div>
+            <h2 id="featured-title"></h2>
+            <p id="featured-content"></p>
+            <div class="featured-footer">
+                <span id="featured-category"></span>
+            </div>
+        </section>
+
+        <section class="curiosities-container visible">
+            <div class="section-header">
+                <h2>📚 Más Anécdotas Libertarias</h2>
+                <p>Descubre historias fascinantes del movimiento por la libertad</p>
+            </div>
+
+            <div id="curiosities-grid" class="curiosities-grid"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Daniel 2026 Pensamiento Libertario. Promoviendo la libertad individual y el libre mercado.</p>
+        <p>La libertad es el derecho natural de todo ser humano.</p>
+    </footer>
+
+    <button class="scroll-top" aria-label="Volver arriba">↑</button>
+
+    <script src="script.js"></script>
+    <script src="curiosidades.js"></script>
+</body>
+</html>
