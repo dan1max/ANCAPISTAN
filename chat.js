@@ -1,7 +1,7 @@
 // Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Sistema de chat con IA usando Hugging Face (GRATUITO)
+    // Sistema de chat con IA usando API gratuita
     let conversationHistory = [];
 
     const chatMessages = document.getElementById('chat-messages');
@@ -14,13 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Error: No se encontraron los elementos del chat');
         return;
     }
-
-    // Contexto del sistema para el asistente
-    const systemPrompt = `Eres un asistente experto en pensamiento libertario y economía austriaca. 
-Respondes preguntas sobre libertarianismo, anarcocapitalismo, libre mercado y filosofía política libertaria.
-Autores clave: Ludwig von Mises, Friedrich Hayek, Murray Rothbard, Frédéric Bastiat.
-Mantén respuestas concisas (máximo 200 palabras), educativas y en español.
-Principios clave: no agresión, propiedad privada, libre mercado, crítica al estatismo.`;
 
     // Event listeners
     sendButton.addEventListener('click', sendMessage);
@@ -65,43 +58,42 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
         scrollToBottom();
 
         try {
-            // Construir el prompt con contexto
-            let fullPrompt = systemPrompt + "\n\n";
+            // Construir contexto de la conversación
+            let context = "Eres un experto en libertarianismo y economía austriaca. Respondes en español de forma concisa y educativa sobre: libre mercado, propiedad privada, no agresión, crítica al estatismo. Autores: Mises, Hayek, Rothbard, Bastiat.\n\n";
             
-            // Añadir las últimas 3 interacciones del historial
-            const recentHistory = conversationHistory.slice(-6);
-            recentHistory.forEach(msg => {
+            // Añadir últimas 3 interacciones
+            const recent = conversationHistory.slice(-6);
+            recent.forEach(msg => {
                 if (msg.role === 'user') {
-                    fullPrompt += `Pregunta: ${msg.content}\n`;
+                    context += `Pregunta: ${msg.content}\n`;
                 } else {
-                    fullPrompt += `Respuesta: ${msg.content}\n\n`;
+                    context += `Respuesta: ${msg.content}\n\n`;
                 }
             });
             
-            fullPrompt += `Pregunta: ${message}\nRespuesta:`;
+            context += `Pregunta: ${message}\nRespuesta:`;
 
-            console.log('Llamando a la API...');
+            console.log('Llamando a la API con proxy CORS...');
 
-            // Llamar a la API de Hugging Face
-            const response = await fetch(
-                "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        inputs: fullPrompt,
-                        parameters: {
-                            max_new_tokens: 400,
-                            temperature: 0.7,
-                            top_p: 0.95,
-                            do_sample: true,
-                            return_full_text: false
-                        }
-                    })
-                }
-            );
+            // Usar proxy CORS + API gratuita de Hugging Face
+            const response = await fetch("https://corsproxy.io/?" + encodeURIComponent(
+                "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+            ), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    inputs: context,
+                    parameters: {
+                        max_new_tokens: 350,
+                        temperature: 0.7,
+                        top_p: 0.9,
+                        do_sample: true,
+                        return_full_text: false
+                    }
+                })
+            });
 
             console.log('Respuesta recibida:', response.status);
 
@@ -112,60 +104,44 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
             }
 
             if (!response.ok) {
-                // Si el modelo está cargando (error 503)
                 if (response.status === 503) {
-                    const errorData = await response.json();
-                    console.log('Modelo cargando:', errorData);
-                    
                     addMessage(
-                        '⏳ El modelo de IA se está iniciando (esto solo ocurre la primera vez). Por favor, espera 20-30 segundos y vuelve a enviar tu pregunta.',
+                        '⏳ El modelo de IA se está iniciando. Por favor, espera 20-30 segundos y vuelve a enviar tu pregunta.',
                         'error'
                     );
                     sendButton.disabled = false;
                     sendButton.textContent = 'Enviar';
                     return;
                 }
-                throw new Error(`Error de API: ${response.status}`);
+                throw new Error(`Error ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('Datos recibidos:', data);
+            console.log('Datos:', data);
 
             let assistantMessage = '';
 
-            // Procesar la respuesta
+            // Extraer respuesta
             if (Array.isArray(data) && data.length > 0) {
-                if (data[0].generated_text) {
-                    assistantMessage = data[0].generated_text;
-                } else if (typeof data[0] === 'string') {
-                    assistantMessage = data[0];
-                }
+                assistantMessage = data[0].generated_text || data[0];
             } else if (data.generated_text) {
                 assistantMessage = data.generated_text;
             } else if (typeof data === 'string') {
                 assistantMessage = data;
             }
 
-            if (!assistantMessage) {
-                throw new Error('No se recibió respuesta del modelo');
+            if (!assistantMessage || assistantMessage.length < 10) {
+                throw new Error('Respuesta vacía o muy corta');
             }
 
-            // Limpiar la respuesta
+            // Limpiar respuesta
             assistantMessage = cleanResponse(assistantMessage);
 
-            console.log('Respuesta limpia:', assistantMessage);
+            // Guardar historial
+            conversationHistory.push({ role: 'user', content: message });
+            conversationHistory.push({ role: 'assistant', content: assistantMessage });
 
-            // Guardar en historial
-            conversationHistory.push({
-                role: 'user',
-                content: message
-            });
-            conversationHistory.push({
-                role: 'assistant',
-                content: assistantMessage
-            });
-
-            // Limitar historial a últimas 10 interacciones
+            // Limitar historial
             if (conversationHistory.length > 20) {
                 conversationHistory = conversationHistory.slice(-20);
             }
@@ -173,7 +149,7 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
             addMessage(assistantMessage, 'assistant');
 
         } catch (error) {
-            console.error('Error completo:', error);
+            console.error('Error:', error);
             
             const loadingMsg = document.getElementById('loading-message');
             if (loadingMsg) {
@@ -181,7 +157,7 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
             }
             
             addMessage(
-                `❌ Error al comunicarse con la IA. ${error.message}. Por favor, intenta de nuevo en unos momentos.`,
+                `❌ No se pudo conectar con la IA. Intenta de nuevo en unos momentos. Si el problema persiste, el servicio podría estar temporalmente no disponible.`,
                 'error'
             );
         } finally {
@@ -194,26 +170,26 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
     function cleanResponse(text) {
         let cleaned = text.trim();
         
-        // Remover el prompt si se repitió
-        const promptMarkers = ['Pregunta:', 'Respuesta:', systemPrompt];
-        promptMarkers.forEach(marker => {
-            if (cleaned.includes(marker)) {
-                const parts = cleaned.split(marker);
-                cleaned = parts[parts.length - 1].trim();
+        // Remover marcadores de prompt
+        const markers = ['Pregunta:', 'Respuesta:', 'Usuario:', 'Asistente:'];
+        markers.forEach(marker => {
+            const index = cleaned.lastIndexOf(marker);
+            if (index !== -1) {
+                cleaned = cleaned.substring(index + marker.length).trim();
             }
         });
         
         // Remover líneas vacías extras
         cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
         
-        // Si es muy corto, dar respuesta por defecto
+        // Si está vacío o muy corto
         if (cleaned.length < 20) {
-            cleaned = "Disculpa, no pude generar una respuesta adecuada. ¿Podrías reformular tu pregunta sobre libertarianismo o economía austriaca?";
+            cleaned = "Entiendo tu pregunta sobre libertarianismo. ¿Podrías ser más específico? Por ejemplo, puedes preguntar sobre: el principio de no agresión, la propiedad privada, el libre mercado, o autores como Mises y Rothbard.";
         }
         
-        // Limitar longitud
-        if (cleaned.length > 1500) {
-            cleaned = cleaned.substring(0, 1500) + '...';
+        // Limitar longitud máxima
+        if (cleaned.length > 1200) {
+            cleaned = cleaned.substring(0, 1200) + '...';
         }
         
         return cleaned;
@@ -240,19 +216,19 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
     }
 
     function formatMessage(text) {
-        // Convertir saltos de línea a <br>
+        // Convertir saltos de línea
         let formatted = text.replace(/\n/g, '<br>');
         
-        // Convertir URLs a enlaces
+        // Convertir URLs
         formatted = formatted.replace(
             /(https?:\/\/[^\s]+)/g,
             '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
         );
         
-        // Resaltar nombres de autores libertarios
+        // Resaltar autores libertarios
         const authors = [
             'Mises', 'Hayek', 'Rothbard', 'Bastiat', 'Nozick', 
-            'Hazlitt', 'Friedman', 'Rand', 'Hoppe', 'Spooner',
+            'Hazlitt', 'Friedman', 'Rand', 'Hoppe',
             'Ludwig von Mises', 'Friedrich Hayek', 'Murray Rothbard'
         ];
         
@@ -273,13 +249,10 @@ Principios clave: no agresión, propiedad privada, libre mercado, crítica al es
         chatMessages.innerHTML = `
             <div class="message assistant-message">
                 <div class="message-content">
-                    <strong>Asistente:</strong> ¡Conversación reiniciada! Soy un asistente especializado en pensamiento libertario. 
-                    Puedo ayudarte a entender conceptos de libertarianismo, economía austriaca, y responder tus 
-                    preguntas sobre filosofía política. ¿En qué puedo ayudarte?
+                    <strong>Asistente:</strong> ¡Conversación reiniciada! Pregúntame sobre libertarianismo, economía austriaca, libre mercado, o filosofía política libertaria. ¿En qué puedo ayudarte?
                 </div>
             </div>
         `;
-        console.log('Conversación limpiada');
     }
 
     console.log('Chat inicializado correctamente');
